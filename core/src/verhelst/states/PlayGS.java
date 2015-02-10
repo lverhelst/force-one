@@ -33,7 +33,6 @@ public class PlayGS extends GameState {
     private World world;
     private Box2DDebugRenderer bdr;
 
-
     private OrthographicCamera b2dCam;
 
     private Body playerBody;
@@ -48,6 +47,7 @@ public class PlayGS extends GameState {
     private LinkedList<Rectangle> rectangles;
     private LinkedList<Body> bodies;
     private LinkedList<Body[]> blocksLists;
+    private LinkedList<Body[]> baddyLists;
     private Random rng = new Random();
 
     public static int jumps = 2;
@@ -58,56 +58,13 @@ public class PlayGS extends GameState {
         rectangles = new LinkedList<Rectangle>();
         bodies = new LinkedList<Body>();
         blocksLists = new LinkedList<Body[]>();
+        baddyLists = new LinkedList<Body[]>();
         world = new World(new Vector2(0,-9.81f), true);
         world.setContactListener(new MyContactListener());
         world.setVelocityThreshold(0.0f);
 
         bdr = new Box2DDebugRenderer();
 
-       /* //create a platform/wall
-        BodyDef bodyDef = new BodyDef();
-        bodyDef.position.set(160/PPM, 5/PPM);
-        bodyDef.type = BodyDef.BodyType.StaticBody;
-        Body body = world.createBody(bodyDef);
-
-
-        //bottom wall
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(160 / PPM, 5 / PPM);
-
-        FixtureDef fixDef = new FixtureDef();
-        fixDef.shape = shape;
-        fixDef.restitution = 1f;
-        body.createFixture(fixDef);
-
-        //top wall
-        bodyDef.position.set(150/PPM, 235/PPM);
-        body = world.createBody(bodyDef);
-
-        shape.setAsBox(160/PPM, 5/PPM);
-        fixDef.shape = shape;
-        fixDef.restitution = 1f;
-        body.createFixture(fixDef);
-
-
-        //side walls left
-        bodyDef.position.set(5/PPM, 120/PPM);
-        body = world.createBody(bodyDef);
-
-        shape.setAsBox(5/PPM, 110/PPM);
-        fixDef.shape = shape;
-        fixDef.restitution = 1f;
-        body.createFixture(fixDef);
-
-        //side walls right
-        bodyDef.position.set(315/PPM, 120/PPM);
-        body = world.createBody(bodyDef);
-
-        shape.setAsBox(5/PPM, 110/PPM);
-        fixDef.shape = shape;
-        fixDef.restitution = 1f;
-        body.createFixture(fixDef);
-*/
         BodyDef bodyDef = new BodyDef();
 
         //create falling box
@@ -183,6 +140,7 @@ public class PlayGS extends GameState {
             rectangles.addFirst(new Rectangle(xLocation - 160 / PPM, yLocation- 5 / PPM, 320 / PPM, 5 / PPM));
             bodies.addFirst(body);
             blocksLists.addFirst(generateBlocks(rectangles.getFirst()));
+            baddyLists.addFirst(generateBaddies(rectangles.getFirst()));
 
             if(rectangles.size() > 10) {
                 rectangles.removeLast();
@@ -190,7 +148,9 @@ public class PlayGS extends GameState {
                 for(Body b : blocksLists.removeLast()){
                     if(b != null) world.destroyBody(b);
                 }
-
+                for(Body b : baddyLists.removeLast()){
+                    if(b != null) world.destroyBody(b);
+                }
             }
         }
         else {
@@ -198,11 +158,17 @@ public class PlayGS extends GameState {
             bodies.add(body);
 
             blocksLists.add(generateBlocks(rectangles.getLast()));
+            baddyLists.add(generateBaddies(rectangles.getLast()));
+
             if(rectangles.size() > 10) {
                 rectangles.removeFirst();
                 world.destroyBody(bodies.removeFirst());
 
                 for(Body b : blocksLists.removeFirst()){
+                    if(b != null) world.destroyBody(b);
+                }
+
+                for(Body b : baddyLists.removeFirst()){
                     if(b != null) world.destroyBody(b);
                 }
 
@@ -240,6 +206,40 @@ public class PlayGS extends GameState {
                 body.createFixture(fixDef);
                 bd[++k] = body;
             }
+        }
+        return bd;
+    }
+
+    private Body[] generateBaddies(Rectangle putBlockOnBody){
+        int numb_blocks = rng.nextInt(3);
+
+
+        float xLocation = putBlockOnBody.getX();
+        float yLocation = putBlockOnBody.getY() + putBlockOnBody.getHeight();
+
+        BodyDef bodyDef = new BodyDef();
+        bodyDef.type = BodyDef.BodyType.DynamicBody;
+        Body body;
+        //bottom wall
+        PolygonShape shape = new PolygonShape();
+        shape.setAsBox(15 / PPM, 15 / PPM);
+        FixtureDef fixDef = new FixtureDef();
+        fixDef.shape = shape;
+        fixDef.density = 40;
+        fixDef.filter.categoryBits = B2DVars.ENEMY_BIT;
+        fixDef.filter.maskBits = -1; //collide with everything
+
+        Body[] bd = new Body[numb_blocks];
+
+        for(int i = 0; i < numb_blocks; i++){
+
+                //create a box
+                bodyDef.position.set(xLocation + (137/PPM) * i + 1,yLocation + (10/PPM));
+                body = world.createBody(bodyDef);
+                body.setUserData("ENEMY");
+                body.createFixture(fixDef);
+                bd[i] = body;
+
         }
         return bd;
     }
