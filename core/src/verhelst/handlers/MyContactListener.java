@@ -6,6 +6,8 @@ import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.Manifold;
 
+import verhelst.states.PlayGS;
+
 /**
  * Created by Orion on 2/8/2015.
  */
@@ -16,17 +18,31 @@ public class MyContactListener  implements ContactListener {
         Fixture fA = contact.getFixtureA();
         Fixture fB = contact.getFixtureB();
 
-        System.out.println("BeginContact");
+
+        if(fA.getBody().getUserData().equals("PLAYER")){
+            PlayGS.jumps = 2;
+        }
+        if(fB.getBody().getUserData().equals("PLAYER")){
+            PlayGS.jumps = 2;
+        }
     }
 
     @Override
-    public void endContact(Contact contact) {
-        System.out.println("End Contact");
-    }
+    public void endContact(Contact contact) {}
 
     @Override
     public void preSolve(Contact contact, Manifold oldManifold) {
+        Fixture fA = contact.getFixtureA();
+        Fixture fB = contact.getFixtureB();
 
+        if(fA.getBody().getUserData().equals("PLAYER")&& fA.getBody().getUserData().equals("PLATFORM")){
+            if(fA.getBody().getLinearVelocity().y > 0)
+                contact.setEnabled(false);
+        }
+        if(fB.getBody().getUserData().equals("PLAYER") && fA.getBody().getUserData().equals("PLATFORM")){
+            if(fB.getBody().getLinearVelocity().y > 0)
+                contact.setEnabled(false);
+        }
     }
 
     @Override
