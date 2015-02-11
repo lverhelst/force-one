@@ -4,6 +4,7 @@ import static verhelst.handlers.B2DVars.PPM;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -15,9 +16,17 @@ import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Random;
 
+import verhelst.GameObjects.Breed;
+import verhelst.GameObjects.Equipment;
+import verhelst.GameObjects.FloatingText;
+import verhelst.GameObjects.HUD;
+import verhelst.GameObjects.Inventory;
+import verhelst.GameObjects.Character;
+import verhelst.Misc.Assets;
 import verhelst.handlers.B2DVars;
 import verhelst.handlers.GameStateManager;
 import verhelst.handlers.MyContactListener;
@@ -30,12 +39,13 @@ import verhelst.prpg.PhysRPG;
  */
 public class PlayGS extends GameState {
 
-    private World world;
+    private  World world;
     private Box2DDebugRenderer bdr;
 
     private OrthographicCamera b2dCam;
 
     private Body playerBody;
+    private Character player;
 
     //for translating screen coordinates
     private Vector3 touchPoint = new Vector3();
@@ -48,6 +58,12 @@ public class PlayGS extends GameState {
     private LinkedList<Body> bodies;
     private LinkedList<Body[]> blocksLists;
     private LinkedList<Body[]> baddyLists;
+    private static LinkedList<FloatingText> floatTexts;
+    private static LinkedList<FloatingText> HUDTexts;
+    Iterator<FloatingText> it;
+
+    private HUD hud;
+
     private Random rng = new Random();
 
     public static int jumps = 2;
@@ -59,6 +75,9 @@ public class PlayGS extends GameState {
         bodies = new LinkedList<Body>();
         blocksLists = new LinkedList<Body[]>();
         baddyLists = new LinkedList<Body[]>();
+        floatTexts = new LinkedList<FloatingText>();
+        HUDTexts = new LinkedList<FloatingText>();
+
         world = new World(new Vector2(0,-9.81f), true);
         world.setContactListener(new MyContactListener());
         world.setVelocityThreshold(0.0f);
@@ -72,10 +91,13 @@ public class PlayGS extends GameState {
         bodyDef.type = BodyDef.BodyType.DynamicBody;
         bodyDef.linearDamping = 0.5f;
         playerBody = world.createBody(bodyDef);
-        playerBody.setUserData("PLAYER");
+        Breed breed = new Breed("Player", 100, 5);
+        player = new Character(playerBody);
+        player.setBreed(breed);
+        playerBody.setUserData(player);
 
         CircleShape cshape = new CircleShape();
-        cshape.setRadius(5/PPM);
+        cshape.setRadius(10/PPM);
 
         FixtureDef fixDef = new FixtureDef();
         fixDef.shape = cshape;
@@ -88,6 +110,8 @@ public class PlayGS extends GameState {
         b2dCam = new OrthographicCamera();
         b2dCam.setToOrtho(false, PhysRPG.V_WIDTH /PPM, PhysRPG.V_HEIGHT /PPM);
 
+
+        hud = new HUD(player);
 
         Gdx.input.setInputProcessor(new MyInputAdapter());
 
@@ -107,7 +131,6 @@ public class PlayGS extends GameState {
 
 
     private void generatePlatform(int side) {
-        System.out.println("Generating :  " + side);
         float xLocation, yLocation;
         if (rectangles.size() < 1){
             xLocation = playerBody.getPosition().x;
@@ -115,7 +138,7 @@ public class PlayGS extends GameState {
         }else {
             xLocation = (side == -1 ? rectangles.getFirst() : rectangles.getLast()).getX() + ((side == -1? side : 3 * side) * 160 / PPM);
 
-            yLocation = (100 + (rng.nextInt(7) == 0 ? 100 : 0))/PPM;
+            yLocation = (100 + (rng.nextInt(6) == 0 ? 100 : 0))/PPM;
         }
         //create a platform/wall
         BodyDef bodyDef = new BodyDef();
@@ -142,7 +165,7 @@ public class PlayGS extends GameState {
             blocksLists.addFirst(generateBlocks(rectangles.getFirst()));
             baddyLists.addFirst(generateBaddies(rectangles.getFirst()));
 
-            if(rectangles.size() > 10) {
+            if(rectangles.size() > 5) {
                 rectangles.removeLast();
                 world.destroyBody(bodies.removeLast());
                 for(Body b : blocksLists.removeLast()){
@@ -160,7 +183,7 @@ public class PlayGS extends GameState {
             blocksLists.add(generateBlocks(rectangles.getLast()));
             baddyLists.add(generateBaddies(rectangles.getLast()));
 
-            if(rectangles.size() > 10) {
+            if(rectangles.size() > 5) {
                 rectangles.removeFirst();
                 world.destroyBody(bodies.removeFirst());
 
@@ -230,18 +253,68 @@ public class PlayGS extends GameState {
         fixDef.filter.maskBits = -1; //collide with everything
 
         Body[] bd = new Body[numb_blocks];
+        Breed breed = new Breed("Enemy", 30, 5);
 
         for(int i = 0; i < numb_blocks; i++){
 
                 //create a box
                 bodyDef.position.set(xLocation + (137/PPM) * i + 1,yLocation + (10/PPM));
                 body = world.createBody(bodyDef);
-                body.setUserData("ENEMY");
+                Character c = new Character(playerBody);
+                c.setBreed(breed);
+                body.setUserData(c);
                 body.createFixture(fixDef);
                 bd[i] = body;
 
         }
         return bd;
+    }
+
+    public static void addFloatingText(Body body, String str){
+        floatTexts.add(new FloatingText(str, body.getPosition().x * PPM, body.getPosition().y * PPM));
+    }
+
+    public static void addHUDText(String str){
+        HUDTexts.add(new FloatingText(str, Assets.floatingTextFont.getBounds("PLAYER: 100").width, 20));
+    }
+
+    private void sweepBaddies(){
+        for(Body[] b : baddyLists){
+            if(b != null){
+                for(int i = 0; i < b.length; i++){
+                    if(b[i] != null){
+                        if((b[i].getUserData() instanceof verhelst.GameObjects.Character)){
+                            if(((verhelst.GameObjects.Character)(b[i].getUserData())).isDead()){
+                                //drop loot?
+                                if(rng.nextBoolean()){
+                                    Inventory.addItem(Equipment.generateRandomEquipment());
+                                }else{
+                                    //add crafting mat?
+                                }
+                                world.destroyBody(b[i]);
+                                b[i] = null;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void sweepFloatingTexts(){
+        for (it = floatTexts.iterator(); it.hasNext(); ) {
+            FloatingText ft = it.next();
+            if (ft.isRemoveable()) {
+                it.remove();
+            }
+        }
+        for (it = HUDTexts.iterator(); it.hasNext(); ) {
+            FloatingText ft = it.next();
+            if (ft.isRemoveable()) {
+                it.remove();
+            }
+        }
+
     }
 
 
@@ -266,10 +339,20 @@ public class PlayGS extends GameState {
             generatePlatform(i);
         }
         if(playerBody.getPosition().y < -2){
+            //Game Over Man
             playerBody.setTransform(playerBody.getPosition().x, 220/PPM, 0);
+        }
+        for(FloatingText t : floatTexts){
+            t.update(false);
+        }
+        for(FloatingText t : HUDTexts){
+            t.update(true);
         }
 
         world.step(dt,6,2);
+
+        sweepBaddies();
+        sweepFloatingTexts();
     }
 
     @Override
@@ -280,6 +363,26 @@ public class PlayGS extends GameState {
 
         Gdx.graphics.getGL20().glClear(GL20.GL_COLOR_BUFFER_BIT);
         bdr.render(world, b2dCam.combined);
+
+
+
+        cam.position.set(playerBody.getPosition().x * PPM, playerBody.getPosition().y * PPM,0);
+        cam.update();
+        batch.setProjectionMatrix(cam.combined);
+        batch.begin();
+        player.render(batch);
+        for (FloatingText f : floatTexts){
+            f.render(batch);
+        }
+
+
+        batch.setProjectionMatrix(hudcam.combined);
+        hud.render(batch);
+        for (FloatingText f : HUDTexts){
+            f.render(batch);
+        }
+        batch.end();
+
     }
 
     @Override

@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 import javax.xml.validation.ValidatorHandler;
 
+import verhelst.Misc.Assets;
 import verhelst.handlers.GameStateManager;
 
 public class PhysRPG extends ApplicationAdapter {
@@ -30,6 +31,7 @@ public class PhysRPG extends ApplicationAdapter {
 
 	@Override
 	public void create () {
+        Assets ass = new Assets();
         batch = new SpriteBatch();
         cam = new OrthographicCamera();
         cam.setToOrtho(false, V_WIDTH, V_HEIGHT);
@@ -41,12 +43,14 @@ public class PhysRPG extends ApplicationAdapter {
 
 	@Override
 	public void render () {
+
        // accum += Gdx.graphics.getDeltaTime();
       //  while(accum >= STEP){
         //    accum -= STEP;
             gsm.update(STEP);
             gsm.render(STEP);
        // }
+
 	}
 
     public SpriteBatch getBatch() {
