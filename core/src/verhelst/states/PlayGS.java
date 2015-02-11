@@ -194,7 +194,7 @@ public class PlayGS extends GameState {
         fixDef.filter.categoryBits = B2DVars.BLOCK_BIT;
         fixDef.filter.maskBits = -1; //collide with everything
 
-        Body[] bd = new Body[12];
+        Body[] bd = new Body[13];
         int k = 0;
         for(int i = 0; i  < numb_blocks; i++){
             stack = rng.nextInt(3) + 1;
