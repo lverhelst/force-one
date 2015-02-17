@@ -12,6 +12,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.CircleShape;
+import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
@@ -78,7 +79,7 @@ public class PlayGS extends GameState {
         floatTexts = new LinkedList<FloatingText>();
         HUDTexts = new LinkedList<FloatingText>();
 
-        world = new World(new Vector2(0,-9.81f), true);
+        world = new World(new Vector2(0f,-9.81f), true);
         world.setContactListener(new MyContactListener());
         world.setVelocityThreshold(0.0f);
 
@@ -89,22 +90,34 @@ public class PlayGS extends GameState {
         //create falling box
         bodyDef.position.set(160/PPM,120/PPM);
         bodyDef.type = BodyDef.BodyType.DynamicBody;
-        bodyDef.linearDamping = 0.5f;
+        bodyDef.linearVelocity.set(4f, 0f);
         playerBody = world.createBody(bodyDef);
+
+
         Breed breed = new Breed("Player", 100, 5);
         player = new Character(playerBody);
         player.setBreed(breed);
         playerBody.setUserData(player);
 
-        CircleShape cshape = new CircleShape();
-        cshape.setRadius(10/PPM);
+        PolygonShape box = new PolygonShape();
+        box.setAsBox(10/PPM, 10/PPM);
 
         FixtureDef fixDef = new FixtureDef();
-        fixDef.shape = cshape;
-        fixDef.restitution = 0.9f;
+        fixDef.shape = box;
+        fixDef.friction = 0f;
         fixDef.filter.categoryBits = B2DVars.PLAYER_BIT;
         fixDef.filter.maskBits = B2DVars.BLOCK_BIT | B2DVars.PLATFORM_BIT | B2DVars.ENEMY_BIT;
         playerBody.createFixture(fixDef);
+
+        //create side sensor
+        box = new PolygonShape();
+        box.setAsBox(10/PPM, 5/PPM);
+
+        fixDef.shape = box;
+        fixDef.isSensor = true;
+        Fixture f = playerBody.createFixture(fixDef);
+        f.setUserData("B_SENSOR");
+
 
         //box2d cam
         b2dCam = new OrthographicCamera();
@@ -325,7 +338,18 @@ public class PlayGS extends GameState {
             if (jumps > 0){
                 jumps = Math.max(0, --jumps);
                 b2dCam.unproject(touchPoint.set(xy[0], xy[1], 0));
-                playerBody.setLinearVelocity((touchPoint.x - playerBody.getPosition().x) * INPUT_VELOCITY_SCALER, (touchPoint.y - playerBody.getPosition().y) * INPUT_VELOCITY_SCALER);
+
+                float xVec = (touchPoint.x - playerBody.getPosition().x);
+                if(xVec < 0f){
+                    xVec = Math.min(-1f, xVec);
+                }
+                else{
+                    xVec = Math.max(1f, xVec);
+                }
+
+
+                playerBody.setLinearVelocity(xVec * INPUT_VELOCITY_SCALER, playerBody.getLinearVelocity().y);
+                playerBody.applyForceToCenter(0, 250f, false);
             }
         }
     }
@@ -338,6 +362,11 @@ public class PlayGS extends GameState {
         if((i = checkPlatforms(playerBody)) != 0) {
             generatePlatform(i);
         }
+       if(playerBody.getLinearVelocity().x < 4f){
+            playerBody.applyForceToCenter(5,0,false);
+        }
+
+
         if(playerBody.getPosition().y < -2){
             //Game Over Man
             playerBody.setTransform(playerBody.getPosition().x, 220/PPM, 0);
@@ -362,7 +391,7 @@ public class PlayGS extends GameState {
         b2dCam.update();
 
         Gdx.graphics.getGL20().glClear(GL20.GL_COLOR_BUFFER_BIT);
-        bdr.render(world, b2dCam.combined);
+
 
 
 
@@ -382,6 +411,8 @@ public class PlayGS extends GameState {
             f.render(batch);
         }
         batch.end();
+
+        bdr.render(world, b2dCam.combined);
 
     }
 

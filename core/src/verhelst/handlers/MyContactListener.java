@@ -32,39 +32,57 @@ public class MyContactListener  implements ContactListener {
         fA = contact.getFixtureA();
         fB = contact.getFixtureB();
 
-        if(fA.getBody().getUserData() instanceof Character && ((Character)fA.getBody().getUserData()).getName().equals("Player") ){
-            PlayGS.jumps = 2;
-        }
-        if(fB.getBody().getUserData() instanceof Character && ((Character)fB.getBody().getUserData()).getName().equals("Player") ){
-            PlayGS.jumps = 2;
-        }
 
-        if(fA.getBody().getUserData() instanceof Character && fB.getBody().getUserData() instanceof Character && ((a = (Character)fA.getBody().getUserData()).getName().equals("Player") || (b = (Character)fB.getBody().getUserData()).getName().equals("Player"))){
-            //Swap, keep the order attack is done 'random'
-            if(System.currentTimeMillis() % 2 == 0) {
-                c = b;
-                b = a;
-                a = c;
-                fC = fB;
-                fB = fA;
-                fA = fB;
+        if(fA.getUserData() instanceof String && fA.getUserData().equals("B_SENSOR")){
+            fA.getBody().setLinearVelocity(-fA.getBody().getLinearVelocity().x, fA.getBody().getLinearVelocity().y);
+        } else
+        if(fB.getUserData() instanceof String &&  fB.getUserData().equals("B_SENSOR")){
+            fB.getBody().setLinearVelocity(-fB.getBody().getLinearVelocity().x, fB.getBody().getLinearVelocity().y);
+        } else{
+
+            if(fA.getBody().getUserData() instanceof Character && ((Character)fA.getBody().getUserData()).getName().equals("Player") ){
+                PlayGS.jumps = 2;
+            }
+            if(fB.getBody().getUserData() instanceof Character && ((Character)fB.getBody().getUserData()).getName().equals("Player") ){
+                PlayGS.jumps = 2;
             }
 
-            dmgToB=  a.getAttack() + (a.getName().equals("Player") ? (int) Math.abs((fA.getBody().getLinearVelocity().x) + Math.abs(fA.getBody().getLinearVelocity().y))  : 1);
-            dmgToA = b.getAttack() +  (b.getName().equals("Player") ? (int) Math.abs((fB.getBody().getLinearVelocity().x) + Math.abs(fB.getBody().getLinearVelocity().y)) : 1);
+            if(fA.getBody().getUserData() instanceof Character && fB.getBody().getUserData() instanceof Character && ((a = (Character)fA.getBody().getUserData()).getName().equals("Player") | (b = (Character)fB.getBody().getUserData()).getName().equals("Player"))){
+                //Swap, keep the order attack is done 'random'
+                if(((Character)fB.getBody().getUserData()).getName().equals("Player")) {
+                    c = b;
+                    b = a;
+                    a = c;
+                    fC = fB;
+                    fB = fA;
+                    fA = fB;
+                }
 
-            b.takeDamage(dmgToB);
-            a.takeDamage(dmgToA);
+                dmgToB=  a.getAttack() + (a.getName().equals("Player") ? (int) Math.abs((fA.getBody().getLinearVelocity().x) + Math.abs(fA.getBody().getLinearVelocity().y))  : 1);
+                b.takeDamage(dmgToB);
+                if(!b.isDead()) {
+                    dmgToA = b.getAttack() + (b.getName().equals("Player") ? (int) Math.abs((fB.getBody().getLinearVelocity().x) + Math.abs(fB.getBody().getLinearVelocity().y)) : 1);
+                    a.takeDamage(dmgToA);
+                }
 
-            if(a.getName().equals("Player")){
-                PlayGS.addFloatingText(fB.getBody(), "-" + dmgToB);
-                PlayGS.addHUDText("-" + dmgToA);
-            }else{
-                PlayGS.addFloatingText(fA.getBody(), "-" + dmgToA);
-                PlayGS.addHUDText("-" + dmgToB);
+
+
+
+                if(a.getName().equals("Player")){
+                    PlayGS.addFloatingText(fB.getBody(), "-" + dmgToB);
+                    PlayGS.addHUDText("-" + dmgToA);
+                }else{
+                    PlayGS.addFloatingText(fA.getBody(), "-" + dmgToA);
+                    PlayGS.addHUDText("-" + dmgToB);
+                }
+
             }
 
         }
+
+
+
+
     }
 
     @Override
@@ -75,7 +93,7 @@ public class MyContactListener  implements ContactListener {
         fA = contact.getFixtureA();
         fB = contact.getFixtureB();
 
-        if(fA.getBody().getUserData() instanceof Character && ((Character)fA.getBody().getUserData()).getName().equals("Player") && fA.getBody().getUserData().equals("PLATFORM")){
+        if(fA.getBody().getUserData() instanceof Character && ((Character)fA.getBody().getUserData()).getName().equals("Player") && fB.getBody().getUserData().equals("PLATFORM")){
             if(fA.getBody().getLinearVelocity().y > 0)
                 contact.setEnabled(false);
         }
