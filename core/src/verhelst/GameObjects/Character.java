@@ -1,6 +1,12 @@
 package verhelst.GameObjects;
 
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.physics.box2d.Body;
+
+import verhelst.Misc.Assets;
+import verhelst.handlers.B2DVars;
 
 /**
  * Created by Orion on 2/10/2015.
@@ -15,12 +21,30 @@ public class Character extends B2DSprite {
 
     public Character(Body body) {
         super(body);
+        Texture tex = Assets.faces;
+        TextureRegion[] sprites = TextureRegion.split(tex, 16, 16)[0];
+        animation.setFrames(sprites, 1 / 30f);
+        animation.setRepeat(true);
+        width = sprites[0].getRegionWidth();
+        height = sprites[0].getRegionHeight();
     }
 
     public void setBreed(Breed breed) {
         this.breed = breed;
         calculateStats();
     }
+
+    public void reset(){
+        Texture tex = Assets.faces;
+        TextureRegion[] sprites = TextureRegion.split(tex, 16, 16)[0];
+        animation.setFrames(sprites, 1 / 30f);
+        animation.setRepeat(true);
+        width = sprites[0].getRegionWidth();
+        height = sprites[0].getRegionHeight();
+        calculateStats();
+    }
+
+
 
     public int takeDamage(int damage){
         System.out.println(getName() + " took damage: " + damage );
@@ -46,10 +70,10 @@ public class Character extends B2DSprite {
     }
 
     public void calculateStats(){
-        currentHealth += breed.getInitialHealth() + ((weapon != null ? weapon.getHp() : 0) + (offhand != null ? offhand.getHp() : 0) + (helmet != null ? helmet.getHp() :0) + (torso != null ? torso.getHp() : 0));
-        currentDefence += breed.getBaseDefence() + ((weapon != null ? weapon.getDefence() : 0) + (offhand != null ? offhand.getDefence()  : 0) + (helmet != null ? helmet.getDefence()  :0) + (torso != null ? torso.getDefence()  : 0));
-        currentAttack += breed.getBaseAttack() + ((weapon != null ? weapon.getDamage() : 0) + (offhand != null ? offhand.getDamage() : 0) + (helmet != null ? helmet.getDamage() :0) + (torso != null ? torso.getDamage() : 0));
-        currentStamina += breed.getBaseStamina() + ((weapon != null ? weapon.getStamina() : 0) + (offhand != null ? offhand.getStamina() : 0) + (helmet != null ? helmet.getStamina() :0) + (torso != null ? torso.getStamina() : 0));
+        currentHealth = breed.getInitialHealth() + ((weapon != null ? weapon.getHp() : 0) + (offhand != null ? offhand.getHp() : 0) + (helmet != null ? helmet.getHp() :0) + (torso != null ? torso.getHp() : 0));
+        currentDefence = breed.getBaseDefence() + ((weapon != null ? weapon.getDefence() : 0) + (offhand != null ? offhand.getDefence()  : 0) + (helmet != null ? helmet.getDefence()  :0) + (torso != null ? torso.getDefence()  : 0));
+        currentAttack = breed.getBaseAttack() + ((weapon != null ? weapon.getDamage() : 0) + (offhand != null ? offhand.getDamage() : 0) + (helmet != null ? helmet.getDamage() :0) + (torso != null ? torso.getDamage() : 0));
+        currentStamina = breed.getBaseStamina() + ((weapon != null ? weapon.getStamina() : 0) + (offhand != null ? offhand.getStamina() : 0) + (helmet != null ? helmet.getStamina() :0) + (torso != null ? torso.getStamina() : 0));
     }
 
     public void equipItem(Equipment item){
@@ -94,5 +118,24 @@ public class Character extends B2DSprite {
 
     public Equipment getTorso() {
         return torso;
+    }
+
+    public void explode(){
+        Texture tex = Assets.explosions;
+        TextureRegion[] sprites = TextureRegion.split(tex, 16, 16)[0];
+        animation.setFrames(sprites, 1 / 10f);
+        animation.setRepeat(false);
+    }
+
+    public boolean isRemoveable(){
+        return isDead() && animation.donePlaying();
+    }
+
+    public void render(Batch batch){
+
+        super.render(batch);
+        if(getName().equals("Enemy") && isDead()){
+            System.out.println(getPosition());
+        }
     }
 }

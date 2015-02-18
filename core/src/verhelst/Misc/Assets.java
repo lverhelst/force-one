@@ -1,6 +1,7 @@
 package verhelst.Misc;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 
@@ -10,6 +11,8 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 public class Assets {
 
     public static BitmapFont floatingTextFont;
+    public static Texture faces;
+    public static Texture explosions;
 
     public Assets(){
         FreeTypeFontGenerator ftfg = new FreeTypeFontGenerator(Gdx.files.internal("game_font.ttf"));
@@ -17,6 +20,7 @@ public class Assets {
         ftfp.size = Math.round(8 * Gdx.graphics.getDensity());
         floatingTextFont = ftfg.generateFont(ftfp);
 
-
+        faces = new Texture(Gdx.files.internal("player.png"));
+        explosions = new Texture(Gdx.files.internal("explosion.png"));
     }
 }

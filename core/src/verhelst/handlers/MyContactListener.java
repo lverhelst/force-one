@@ -3,6 +3,7 @@ package verhelst.handlers;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
+import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.Manifold;
 import com.badlogic.gdx.physics.box2d.World;
@@ -34,11 +35,13 @@ public class MyContactListener  implements ContactListener {
 
 
         if(fA.getUserData() instanceof String && fA.getUserData().equals("B_SENSOR")){
-            fA.getBody().setLinearVelocity(-fA.getBody().getLinearVelocity().x, fA.getBody().getLinearVelocity().y);
+            if(fA.getBody().getLinearVelocity().y <= 0)
+                fA.getBody().setLinearVelocity(-fA.getBody().getLinearVelocity().x, fA.getBody().getLinearVelocity().y);
         } else
         if(fB.getUserData() instanceof String &&  fB.getUserData().equals("B_SENSOR")){
-            fB.getBody().setLinearVelocity(-fB.getBody().getLinearVelocity().x, fB.getBody().getLinearVelocity().y);
-        } else{
+            if(fB.getBody().getLinearVelocity().y <= 0)
+                fB.getBody().setLinearVelocity(-fB.getBody().getLinearVelocity().x, fB.getBody().getLinearVelocity().y);
+        }
 
             if(fA.getBody().getUserData() instanceof Character && ((Character)fA.getBody().getUserData()).getName().equals("Player") ){
                 PlayGS.jumps = 2;
@@ -63,6 +66,12 @@ public class MyContactListener  implements ContactListener {
                 if(!b.isDead()) {
                     dmgToA = b.getAttack() + (b.getName().equals("Player") ? (int) Math.abs((fB.getBody().getLinearVelocity().x) + Math.abs(fB.getBody().getLinearVelocity().y)) : 1);
                     a.takeDamage(dmgToA);
+                }else{
+                    b.explode();
+                    //disable collision with player
+                    Filter f = fB.getFilterData();
+                    f.maskBits = B2DVars.PLATFORM_BIT;
+                    fB.setFilterData(f);
                 }
 
 
@@ -78,7 +87,7 @@ public class MyContactListener  implements ContactListener {
 
             }
 
-        }
+
 
 
 

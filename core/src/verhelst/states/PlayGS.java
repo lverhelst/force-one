@@ -40,6 +40,13 @@ import verhelst.prpg.PhysRPG;
  */
 public class PlayGS extends GameState {
 
+    public enum PLAYSTATE {
+        PLAY,
+        PAUSE,
+        GAMEOVER
+    }
+
+
     private  World world;
     private Box2DDebugRenderer bdr;
 
@@ -69,6 +76,8 @@ public class PlayGS extends GameState {
 
     public static int jumps = 2;
 
+    public static PLAYSTATE playstate;
+
     public PlayGS(GameStateManager gsm){
         super(gsm);
 
@@ -90,7 +99,7 @@ public class PlayGS extends GameState {
         //create falling box
         bodyDef.position.set(160/PPM,120/PPM);
         bodyDef.type = BodyDef.BodyType.DynamicBody;
-        bodyDef.linearVelocity.set(4f, 0f);
+        bodyDef.linearVelocity.set(3f, 0f);
         playerBody = world.createBody(bodyDef);
 
 
@@ -99,8 +108,8 @@ public class PlayGS extends GameState {
         player.setBreed(breed);
         playerBody.setUserData(player);
 
-        PolygonShape box = new PolygonShape();
-        box.setAsBox(10/PPM, 10/PPM);
+        CircleShape box = new CircleShape();
+        box.setRadius(10f/PPM);
 
         FixtureDef fixDef = new FixtureDef();
         fixDef.shape = box;
@@ -110,10 +119,10 @@ public class PlayGS extends GameState {
         playerBody.createFixture(fixDef);
 
         //create side sensor
-        box = new PolygonShape();
-        box.setAsBox(10/PPM, 5/PPM);
+        PolygonShape pbox = new PolygonShape();
+        pbox.setAsBox(10/PPM, 5/PPM);
 
-        fixDef.shape = box;
+        fixDef.shape = pbox;
         fixDef.isSensor = true;
         Fixture f = playerBody.createFixture(fixDef);
         f.setUserData("B_SENSOR");
@@ -126,17 +135,40 @@ public class PlayGS extends GameState {
 
         hud = new HUD(player);
 
+        playstate = PLAYSTATE.PLAY;
         Gdx.input.setInputProcessor(new MyInputAdapter());
 
     }
+
+    private void spawnExplosion(){
+
+    }
+
+    private void restart(){
+        while(rectangles.size() > 0) {
+            rectangles.removeLast();
+            world.destroyBody(bodies.removeLast());
+            if(blocksLists.size() > 0)
+              for(Body b : blocksLists.removeLast()){
+                 if(b != null) world.destroyBody(b);
+              }
+            if(baddyLists.size() > 0)
+                for(Body b : baddyLists.removeLast()){
+                    if(b != null) world.destroyBody(b);
+                }
+        }
+        player.reset();
+        playerBody.setTransform(playerBody.getPosition().x, 220 / PPM, 0);
+    }
+
 
     private int checkPlatforms(Body body){
         if(rectangles.size() < 1)
             return 1;
 
-        if(body.getPosition().x < rectangles.getFirst().getX() + rectangles.getFirst().getWidth()/4)
+        if(body.getPosition().x < rectangles.getFirst().getX() + rectangles.getFirst().getWidth()/2)
             return -1;
-        if(body.getPosition().x > rectangles.getLast().getX() + 3 * rectangles.getLast().getWidth()/4)
+        if(body.getPosition().x > rectangles.getLast().getX() + rectangles.getLast().getWidth()/2)
             return 1;
         return 0;
     }
@@ -151,7 +183,7 @@ public class PlayGS extends GameState {
         }else {
             xLocation = (side == -1 ? rectangles.getFirst() : rectangles.getLast()).getX() + ((side == -1? side : 3 * side) * 160 / PPM);
 
-            yLocation = (100 + (rng.nextInt(6) == 0 ? 100 : 0))/PPM;
+            yLocation = (100 + (rng.nextInt(6) * 20))/PPM;
         }
         //create a platform/wall
         BodyDef bodyDef = new BodyDef();
@@ -175,40 +207,44 @@ public class PlayGS extends GameState {
         if(side == -1){
             rectangles.addFirst(new Rectangle(xLocation - 160 / PPM, yLocation- 5 / PPM, 320 / PPM, 5 / PPM));
             bodies.addFirst(body);
-            blocksLists.addFirst(generateBlocks(rectangles.getFirst()));
+           // blocksLists.addFirst(generateBlocks(rectangles.getFirst()));
+
             baddyLists.addFirst(generateBaddies(rectangles.getFirst()));
 
             if(rectangles.size() > 5) {
                 rectangles.removeLast();
                 world.destroyBody(bodies.removeLast());
-                for(Body b : blocksLists.removeLast()){
-                    if(b != null) world.destroyBody(b);
-                }
-                for(Body b : baddyLists.removeLast()){
-                    if(b != null) world.destroyBody(b);
-                }
+              ///  for(Body b : blocksLists.removeLast()){
+               //     if(b != null) world.destroyBody(b);
+              //  }
+                if(baddyLists.size() > 0)
+                    for(Body b : baddyLists.removeLast()){
+                        if(b != null) world.destroyBody(b);
+                    }
             }
         }
         else {
             rectangles.add(new Rectangle(xLocation - 160 / PPM, yLocation - 5 / PPM, 320 / PPM, 5 / PPM));
             bodies.add(body);
 
-            blocksLists.add(generateBlocks(rectangles.getLast()));
+            // blocksLists.add(generateBlocks(rectangles.getLast()));
+
             baddyLists.add(generateBaddies(rectangles.getLast()));
 
             if(rectangles.size() > 5) {
                 rectangles.removeFirst();
                 world.destroyBody(bodies.removeFirst());
 
-                for(Body b : blocksLists.removeFirst()){
-                    if(b != null) world.destroyBody(b);
-                }
-
-                for(Body b : baddyLists.removeFirst()){
-                    if(b != null) world.destroyBody(b);
-                }
+             //   for(Body b : blocksLists.removeFirst()){
+             //       if(b != null) world.destroyBody(b);
+             //   }
+                if(baddyLists.size() > 0)
+                    for(Body b : baddyLists.removeFirst()){
+                        if(b != null) world.destroyBody(b);
+                    }
 
             }
+
         }
     }
 
@@ -247,8 +283,12 @@ public class PlayGS extends GameState {
     }
 
     private Body[] generateBaddies(Rectangle putBlockOnBody){
-        int numb_blocks = rng.nextInt(3);
 
+        int numb_blocks = rng.nextInt(3);
+        if(rng.nextBoolean())
+            numb_blocks = 0;
+
+        System.out.println("Generate " + numb_blocks +  " Baddies");
 
         float xLocation = putBlockOnBody.getX();
         float yLocation = putBlockOnBody.getY() + putBlockOnBody.getHeight();
@@ -266,14 +306,14 @@ public class PlayGS extends GameState {
         fixDef.filter.maskBits = -1; //collide with everything
 
         Body[] bd = new Body[numb_blocks];
-        Breed breed = new Breed("Enemy", 30, 5);
+        Breed breed = new Breed("Enemy", 1, 5);
 
         for(int i = 0; i < numb_blocks; i++){
 
                 //create a box
                 bodyDef.position.set(xLocation + (137/PPM) * i + 1,yLocation + (10/PPM));
                 body = world.createBody(bodyDef);
-                Character c = new Character(playerBody);
+                Character c = new Character(body);
                 c.setBreed(breed);
                 body.setUserData(c);
                 body.createFixture(fixDef);
@@ -291,13 +331,42 @@ public class PlayGS extends GameState {
         HUDTexts.add(new FloatingText(str, Assets.floatingTextFont.getBounds("PLAYER: 100").width, 20));
     }
 
+
+    private void updateBaddies(float dt){
+        for(Body[] b : baddyLists){
+            if(b != null){
+                for(int i = 0; i < b.length; i++){
+                    if(b[i] != null){
+                        if((b[i].getUserData() instanceof verhelst.GameObjects.Character)){
+                            ((verhelst.GameObjects.Character)(b[i].getUserData())).update(dt);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void renderBaddies(Batch batch){
+        for(Body[] b : baddyLists){
+            if(b != null){
+                for(int i = 0; i < b.length; i++){
+                    if(b[i] != null){
+                        if((b[i].getUserData() instanceof verhelst.GameObjects.Character)){
+                            ((verhelst.GameObjects.Character)(b[i].getUserData())).render(batch);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private void sweepBaddies(){
         for(Body[] b : baddyLists){
             if(b != null){
                 for(int i = 0; i < b.length; i++){
                     if(b[i] != null){
                         if((b[i].getUserData() instanceof verhelst.GameObjects.Character)){
-                            if(((verhelst.GameObjects.Character)(b[i].getUserData())).isDead()){
+                            if(((verhelst.GameObjects.Character)(b[i].getUserData())).isRemoveable()){
                                 //drop loot?
                                 if(rng.nextBoolean()){
                                     Inventory.addItem(Equipment.generateRandomEquipment());
@@ -335,21 +404,31 @@ public class PlayGS extends GameState {
     public void handleInput() {
         if(MyInput.hasTouch()) {
             xy = MyInput.consumeXY();
-            if (jumps > 0){
-                jumps = Math.max(0, --jumps);
-                b2dCam.unproject(touchPoint.set(xy[0], xy[1], 0));
+            switch(playstate) {
+                case PLAY:
+                    if (jumps > 0) {
+                        jumps = Math.max(0, --jumps);
+                        b2dCam.unproject(touchPoint.set(xy[0], xy[1], 0));
 
-                float xVec = (touchPoint.x - playerBody.getPosition().x);
-                if(xVec < 0f){
-                    xVec = Math.min(-1f, xVec);
-                }
-                else{
-                    xVec = Math.max(1f, xVec);
-                }
+                        float xVec = (touchPoint.x - playerBody.getPosition().x);
+                        if (xVec < 0f) {
+                            xVec = Math.min(-1f, xVec);
+                        } else {
+                            xVec = Math.max(1f, xVec);
+                        }
 
 
-                playerBody.setLinearVelocity(xVec * INPUT_VELOCITY_SCALER, playerBody.getLinearVelocity().y);
-                playerBody.applyForceToCenter(0, 250f, false);
+                        playerBody.setLinearVelocity(Math.min(xVec * INPUT_VELOCITY_SCALER, 3f), playerBody.getLinearVelocity().y);
+                        playerBody.applyForceToCenter(0, 250f, false);
+                    }
+                    break;
+                case PAUSE:
+                    break;
+                case GAMEOVER:
+                    restart();
+                    playstate = PLAYSTATE.PLAY;
+                    break;
+
             }
         }
     }
@@ -358,28 +437,40 @@ public class PlayGS extends GameState {
     @Override
     public void update(float dt) {
         handleInput();
-        int i;
-        if((i = checkPlatforms(playerBody)) != 0) {
-            generatePlatform(i);
-        }
-       if(playerBody.getLinearVelocity().x < 4f){
-            playerBody.applyForceToCenter(5,0,false);
-        }
 
-
-        if(playerBody.getPosition().y < -2){
-            //Game Over Man
-            playerBody.setTransform(playerBody.getPosition().x, 220/PPM, 0);
-        }
-        for(FloatingText t : floatTexts){
+        player.update(dt);
+        updateBaddies(dt);
+        for (FloatingText t : floatTexts) {
             t.update(false);
         }
-        for(FloatingText t : HUDTexts){
-            t.update(true);
+        for (FloatingText t : HUDTexts) {
+            t.update(false);
         }
 
-        world.step(dt,6,2);
+        switch(playstate) {
+            case PLAY:
+                int i;
+                if ((i = checkPlatforms(playerBody)) != 0) {
+                    generatePlatform(i);
+                }
+                if (playerBody.getLinearVelocity().x < 3f) {
+                    playerBody.applyForceToCenter(5, 0, false);
+                }
+                if (playerBody.getPosition().y < -2 || player.isDead()) {
+                    //Game Over Man
+                    player.explode();
+                    playstate = PLAYSTATE.GAMEOVER;
+                }
+                world.step(dt, 6, 2);
 
+
+                break;
+            case PAUSE:
+                break;
+            case GAMEOVER:
+
+                break;
+        }
         sweepBaddies();
         sweepFloatingTexts();
     }
@@ -392,14 +483,15 @@ public class PlayGS extends GameState {
 
         Gdx.graphics.getGL20().glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-
-
-
         cam.position.set(playerBody.getPosition().x * PPM, playerBody.getPosition().y * PPM,0);
         cam.update();
         batch.setProjectionMatrix(cam.combined);
         batch.begin();
+
         player.render(batch);
+
+        renderBaddies(batch);
+
         for (FloatingText f : floatTexts){
             f.render(batch);
         }
