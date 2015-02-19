@@ -14,10 +14,12 @@ public class Assets {
     public static Texture faces;
     public static Texture explosions;
 
+    public static float baseGraphicsDensity = 0.6f;
+
     public Assets(){
         FreeTypeFontGenerator ftfg = new FreeTypeFontGenerator(Gdx.files.internal("game_font.ttf"));
         FreeTypeFontGenerator.FreeTypeFontParameter ftfp = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        ftfp.size = Math.round(8 * Gdx.graphics.getDensity());
+        ftfp.size = Math.round(16 * Gdx.graphics.getDensity()/baseGraphicsDensity);
         floatingTextFont = ftfg.generateFont(ftfp);
 
         faces = new Texture(Gdx.files.internal("player.png"));

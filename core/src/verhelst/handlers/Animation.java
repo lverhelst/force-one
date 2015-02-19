@@ -55,8 +55,12 @@ public class Animation {
             }
             currentFrame++;
             if(currentFrame == frames.length) {
-                currentFrame = 0;
                 timesPlayed++;
+                if(repeat)
+                    currentFrame = 0;
+                else
+                    currentFrame--;
+
             }
         }
 

@@ -72,6 +72,7 @@ public class MyContactListener  implements ContactListener {
                     Filter f = fB.getFilterData();
                     f.maskBits = B2DVars.PLATFORM_BIT;
                     fB.setFilterData(f);
+                    PlayGS.kills++;
                 }
 
 

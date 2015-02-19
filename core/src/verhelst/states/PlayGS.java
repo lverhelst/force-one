@@ -78,6 +78,11 @@ public class PlayGS extends GameState {
 
     public static PLAYSTATE playstate;
 
+    public static float distance_travelled = 0.0f;
+    public static int kills = 0;
+    private float last_pos;
+
+
     public PlayGS(GameStateManager gsm){
         super(gsm);
 
@@ -127,6 +132,7 @@ public class PlayGS extends GameState {
         Fixture f = playerBody.createFixture(fixDef);
         f.setUserData("B_SENSOR");
 
+        last_pos = playerBody.getPosition().x;
 
         //box2d cam
         b2dCam = new OrthographicCamera();
@@ -140,9 +146,6 @@ public class PlayGS extends GameState {
 
     }
 
-    private void spawnExplosion(){
-
-    }
 
     private void restart(){
         while(rectangles.size() > 0) {
@@ -159,6 +162,9 @@ public class PlayGS extends GameState {
         }
         player.reset();
         playerBody.setTransform(playerBody.getPosition().x, 220 / PPM, 0);
+        distance_travelled = 0.0f;
+        last_pos = playerBody.getPosition().x;
+        kills = 0;
     }
 
 
@@ -462,6 +468,7 @@ public class PlayGS extends GameState {
                     playstate = PLAYSTATE.GAMEOVER;
                 }
                 world.step(dt, 6, 2);
+                distance_travelled = Math.max(distance_travelled, playerBody.getPosition().x - last_pos);
 
 
                 break;
