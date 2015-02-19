@@ -306,7 +306,7 @@ public class PlayGS extends GameState {
         fixDef.filter.maskBits = -1; //collide with everything
 
         Body[] bd = new Body[numb_blocks];
-        Breed breed = new Breed("Enemy", 1, 5);
+        Breed breed = new Breed("Enemy", 20, 5);
 
         for(int i = 0; i < numb_blocks; i++){
 
@@ -418,7 +418,7 @@ public class PlayGS extends GameState {
                         }
 
 
-                        playerBody.setLinearVelocity(Math.min(xVec * INPUT_VELOCITY_SCALER, 3f), playerBody.getLinearVelocity().y);
+                        playerBody.setLinearVelocity(Math.min(xVec * INPUT_VELOCITY_SCALER, 3f), 0f);
                         playerBody.applyForceToCenter(0, 250f, false);
                     }
                     break;
